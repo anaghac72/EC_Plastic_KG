@@ -58,6 +58,8 @@ ENTITY_PATTERNS = [
     ("Toxicity", "Outcome", r"\btoxicity\b"),
     ("Monomer Purity", "Outcome", r"monomer purity"),
     ("Degradation Extent", "Outcome", r"\bdegraded\b"),
+    ("Corrosive Gases", "Outcome", r"corrosive gases?"),
+    ("Sublimating Substances", "Outcome", r"sublimating substances?"),
     # Research concepts
     ("Waste-to-Energy", "Concept", r"waste-to-energy"),
     ("Circular Economy", "Concept", r"circular economy"),

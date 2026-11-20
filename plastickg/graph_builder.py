@@ -41,9 +41,15 @@ def build_graph(keyword, claims, abstracts_by_id, retrieved):
                 add_edge(f"{c.id}", nid, label)
             else:
                 add_edge(f"{c.id}", nid, label)
+        if c.subject and c.object:
+            add_edge(f"E_{c.subject['name']}", f"E_{c.object['name']}",
+                     c.predicate, claim_id=c.id)
         short = c.text if len(c.text) <= 90 else c.text[:87] + "..."
         add_node(c.id, "Claim", short, full_text=c.text, abstract_id=c.abstract_id,
-                 polarity=c.polarity, scope=c.scope)
+                 polarity=c.polarity, scope=c.scope,
+                 sop_subject=c.subject["name"] if c.subject else "",
+                 sop_predicate=c.predicate,
+                 sop_object=c.object["name"] if c.object else "")
         ev = f"EV_{c.id}"
         add_node(ev, "Evidence", f"[{c.abstract_id}] \"{c.text[:60]}...\"", passage=c.text,
                  abstract_id=c.abstract_id, abstract_title=ab["title"], start=c.start, end=c.end,

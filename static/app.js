@@ -73,13 +73,13 @@ function describeNode(n) {
 }
 
 function renderTriples(g, hidden = new Set()) {
-  const byId = new Map(g.nodes.map(n => [n.id, n]));
-  const visible = g.edges.filter(e => !hidden.has(e.from) && !hidden.has(e.to));
+  const visible = g.nodes.filter(n => n.type === "Claim" && !hidden.has(n.id) &&
+    n.data.sop_subject && n.data.sop_object);
   $("#tripleCount").textContent = visible.length + " triples";
   $("#triples tbody").innerHTML = visible.length
-    ? visible.map(e => "<tr><td>" + esc(describeNode(byId.get(e.from))) +
-        "</td><td class=\"triple-relation\">" + esc(e.label) +
-        "</td><td>" + esc(describeNode(byId.get(e.to))) + "</td></tr>").join("")
+    ? visible.map(n => "<tr><td>" + esc(n.data.sop_subject) +
+        "</td><td class=\"triple-relation\">" + esc(n.data.sop_predicate) +
+        "</td><td>" + esc(n.data.sop_object) + "</td></tr>").join("")
     : "<tr><td colspan=\"3\" class=\"muted\">No triples match the current filters.</td></tr>";
 }
 

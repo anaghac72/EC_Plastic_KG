@@ -16,6 +16,7 @@ class Claim:
     entities: list
     subject: dict
     object: dict
+    predicate: str
     polarity: str
     uncertainty: str
     uncertainty_cue: str
@@ -61,6 +62,29 @@ def pick_subject_object(ents):
            or next((e for e in rest if e["type"] in ("Product", "Monomer")), None)
            or (rest[0] if rest else None))
     return subject, obj
+
+
+def pick_sop(ents, sentence):
+    """Pick concise entity endpoints and a readable relation for an SOP triple."""
+    polymers = [e for e in ents if e["type"] == "Polymer"]
+    processes = [e for e in ents if e["type"] == "Process"]
+    outcomes = [e for e in ents if e["type"] in ("Outcome", "Product", "Monomer")]
+    # Materials treated by a process are the grammatical subject of an
+    # "undergoes" relation; this avoids making the evidence sentence the head.
+    if polymers and processes and re.search(r"\b(during|through|via|by)\b", sentence, re.I):
+        return polymers[0], processes[0], "undergoes"
+    subject, obj = pick_subject_object(ents)
+    if obj is None:
+        return subject, None, "related to"
+    if re.search(r"\b(produc\w*|generat\w*|yield\w*)\b", sentence, re.I):
+        predicate = "produces"
+    elif re.search(r"\b(reduc\w*|decreas\w*|lower\w*)\b", sentence, re.I):
+        predicate = "reduces"
+    elif re.search(r"\b(increas\w*|improv\w*|enhanc\w*|higher)\b", sentence, re.I):
+        predicate = "increases"
+    else:
+        predicate = "affects"
+    return subject, obj, predicate
 
 
 def uncertainty_of(sentence):
@@ -115,7 +139,7 @@ def extract_claims(abstract):
             continue
         if not (L.FINDING_CUES.search(s) or re.search(r"\d", s)):
             continue
-        subj, obj = pick_subject_object(ents)
+        subj, obj, predicate = pick_sop(ents, s)
         level, cue = uncertainty_of(s)
         scope = scope_of(s, ents)
         inherited = []
@@ -127,6 +151,6 @@ def extract_claims(abstract):
             scope["inherited_from_abstract"] = inherited
         claims.append(Claim(
             id=f"C_{abstract['id']}_{i+1}", abstract_id=abstract["id"], text=s,
-            start=start, end=end, entities=ents, subject=subj, object=obj,
+            start=start, end=end, entities=ents, subject=subj, object=obj, predicate=predicate,
             polarity=polarity_of(s), uncertainty=level, uncertainty_cue=cue, scope=scope))
     return claims
