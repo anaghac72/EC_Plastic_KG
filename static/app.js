@@ -1,5 +1,4 @@
-const COLORS = {Entity:"#2f7f86", Claim:"#e3a73a", Evidence:"#8fb996",
-                U1:"#2f8f5b", U2:"#d98e1f", U3:"#c4452f"};
+const COLORS = {Entity:"#2f7f86"};
 const EDGE_COLORS = {Supports:"#2f8f5b", Challenges:"#c4452f", Refines:"#6a5acd", Inconclusive:"#d98e1f"};
 let network, nodesDS, edgesDS, current;
 
@@ -15,8 +14,7 @@ fetch("/api/keywords").then(r => r.json()).then(groups => {
   });
 });
 $("#searchForm").addEventListener("submit", e => { e.preventDefault(); run($("#q").value); });
-$("#legend").innerHTML = [["Entity",COLORS.Entity],["Claim",COLORS.Claim],["Evidence",COLORS.Evidence],
-  ["U1 low",COLORS.U1],["U2 moderate",COLORS.U2],["U3 high",COLORS.U3]]
+  $("#legend").innerHTML = [["Entity",COLORS.Entity]]
   .map(([l,c]) => `<li><i style="background:${c}"></i>${l}</li>`).join("");
 
 async function run(q) {
@@ -32,13 +30,7 @@ function nodeStyle(n) {
   const base = {id:n.id, label:n.label, title:n.type, _n:n, font:{face:"IBM Plex Sans", size:13}};
   if (n.type === "Entity") return {...base, shape:"ellipse", color:{background:COLORS.Entity, border:"#1d5a60"},
       font:{color:"#fff", size:n.data.is_query ? 18 : 14, face:"IBM Plex Sans"}, borderWidth:n.data.is_query ? 4 : 1};
-  if (n.type === "Claim") return {...base, shape:"box", color:{background:COLORS.Claim, border:"#a87a1c"},
-      widthConstraint:{maximum:230}, font:{color:"#1a1a1a", size:12, face:"IBM Plex Sans"}, margin:8};
-  if (n.type === "Evidence") return {...base, shape:"box", shapeProperties:{borderDashes:[4,3]},
-      color:{background:COLORS.Evidence, border:"#5d8d66"}, widthConstraint:{maximum:200},
-      font:{color:"#10261a", size:11, face:"IBM Plex Sans"}};
-  return {...base, shape:"diamond", size:16, color:{background:COLORS[n.data.level], border:"#00000055"},
-      font:{color:"#888", size:12, face:"IBM Plex Sans"}};
+  return {...base, hidden:true};
 }
 
 function render(g) {
@@ -47,8 +39,11 @@ function render(g) {
     `${s.entities} entities. Uncertainty U1 ${s.uncertainty.U1} / U2 ${s.uncertainty.U2} / U3 ${s.uncertainty.U3}.`;
   if (!s.claims) { $("#summary").innerHTML += " No matching claims found."; }
   $("#filters").hidden = false;
-  nodesDS = new vis.DataSet(g.nodes.map(nodeStyle));
-  edgesDS = new vis.DataSet(g.edges.map((e,i) => ({id:i, from:e.from, to:e.to, label:e.label, _e:e,
+  const graphNodes = g.nodes.filter(n => n.type === "Entity");
+  const entityIds = new Set(graphNodes.map(n => n.id));
+  const graphEdges = g.edges.filter(e => entityIds.has(e.from) && entityIds.has(e.to));
+  nodesDS = new vis.DataSet(graphNodes.map(nodeStyle));
+  edgesDS = new vis.DataSet(graphEdges.map((e,i) => ({id:i, from:e.from, to:e.to, label:e.label, _e:e,
     arrows:"to", font:{size:10, align:"middle", strokeWidth:3, strokeColor:getComputedStyle(document.body).backgroundColor},
     color:{color:EDGE_COLORS[e.label] || "#7a9296"}, width:EDGE_COLORS[e.label] ? 3 : 1,
     dashes: e.label === "From Finding"})));
@@ -77,7 +72,7 @@ function renderTriples(g, hidden = new Set()) {
     n.data.sop_subject && n.data.sop_object);
   $("#tripleCount").textContent = visible.length + " triples";
   $("#triples tbody").innerHTML = visible.length
-    ? visible.map(n => "<tr><td>" + esc(n.data.sop_subject) +
+    ? visible.map(n => `<tr data-claim="${esc(n.id)}"><td>` + esc(n.data.sop_subject) +
         "</td><td class=\"triple-relation\">" + esc(n.data.sop_predicate) +
         "</td><td>" + esc(n.data.sop_object) + "</td></tr>").join("")
     : "<tr><td colspan=\"3\" class=\"muted\">No triples match the current filters.</td></tr>";
@@ -85,11 +80,32 @@ function renderTriples(g, hidden = new Set()) {
 
 function showEdgeTriple(e) {
   const byId = new Map(current.nodes.map(n => [n.id, n]));
-  $("#detail").innerHTML = "<h2>Graph triple</h2><dl class=\"triple-detail\">" +
-    "<dt>Head</dt><dd>" + esc(describeNode(byId.get(e.from))) + "</dd>" +
-    "<dt>Relation</dt><dd><b>" + esc(e.label) + "</b></dd>" +
-    "<dt>Tail</dt><dd>" + esc(describeNode(byId.get(e.to))) + "</dd></dl>";
+  const claim = byId.get(e.data?.claim_id);
+  showTripleDetails(e.from, e.label, e.to, claim);
 }
+
+function showTripleDetails(from, relation, to, claim) {
+  const byId = new Map(current.nodes.map(n => [n.id, n]));
+  const evidence = claim && byId.get("EV_" + claim.id);
+  const endpoint = value => {
+    const node = byId.get(value);
+    return node ? describeNode(node) : String(value || "");
+  };
+  $("#detail").innerHTML = "<h2>Graph triple</h2><dl class=\"triple-detail\">" +
+    "<dt>Head</dt><dd>" + esc(endpoint(from)) + "</dd>" +
+    "<dt>Relation</dt><dd><b>" + esc(relation) + "</b></dd>" +
+    "<dt>Tail</dt><dd>" + esc(endpoint(to)) + "</dd></dl>" +
+    (claim ? "<h3>Claim</h3><p class=\"ctx\">" + esc(claim.data.full_text) + "</p>" : "") +
+    (evidence ? "<h3>Evidence</h3><p class=\"ctx\">" + esc(evidence.data.passage) + "</p>" : "");
+}
+
+$("#triples tbody").addEventListener("click", e => {
+  const row = e.target.closest("tr[data-claim]");
+  if (!row || !current) return;
+  const claim = current.nodes.find(n => n.id === row.dataset.claim);
+  if (claim) showTripleDetails(claim.data.sop_subject, claim.data.sop_predicate,
+    claim.data.sop_object, claim);
+});
 
 function applyFilters() {
   if (!current) return;
@@ -101,10 +117,7 @@ function applyFilters() {
   });
   // a claim is hidden only if its own uncertainty level is filtered out
   const claimHidden = id => hide.has(id) && current.nodes.find(n => n.id === "U_" + id && !on.has(n.data.level));
-  nodesDS.update(current.nodes.map(n => ({id:n.id,
-    hidden: n.type === "Claim" ? !!claimHidden(n.id)
-          : n.type === "Evidence" ? (!ev || !!claimHidden(n.id.replace("EV_","")))
-          : n.type === "Uncertainty" ? !on.has(n.data.level) : false})));
+  nodesDS.update(current.nodes.filter(n => n.type === "Entity").map(n => ({id:n.id, hidden:false})));
   renderTriples(current, hide);
 }
 document.querySelector("#filters").addEventListener("change", applyFilters);
