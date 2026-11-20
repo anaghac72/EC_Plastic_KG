@@ -57,9 +57,38 @@ function render(g) {
     interaction:{hover:true}});
   network.on("click", p => {
     if (p.nodes.length) showNode(nodesDS.get(p.nodes[0])._n);
-    else if (p.edges.length) showEdge(edgesDS.get(p.edges[0])._e);
+    else if (p.edges.length) showEdgeTriple(edgesDS.get(p.edges[0])._e);
   });
   applyFilters();
+}
+
+function describeNode(n) {
+  if (!n) return "Unknown node";
+  const d = n.data || {};
+  if (n.type === "Entity") return "Entity (" + d.entity_type + "): " + n.label;
+  if (n.type === "Claim") return "Claim [" + d.abstract_id + "]: " + d.full_text;
+  if (n.type === "Evidence") return "Evidence [" + d.abstract_id + "]: " + d.passage;
+  if (n.type === "Uncertainty") return "Uncertainty: " + d.level;
+  return n.type + ": " + n.label;
+}
+
+function renderTriples(g, hidden = new Set()) {
+  const byId = new Map(g.nodes.map(n => [n.id, n]));
+  const visible = g.edges.filter(e => !hidden.has(e.from) && !hidden.has(e.to));
+  $("#tripleCount").textContent = visible.length + " triples";
+  $("#triples tbody").innerHTML = visible.length
+    ? visible.map(e => "<tr><td>" + esc(describeNode(byId.get(e.from))) +
+        "</td><td class=\"triple-relation\">" + esc(e.label) +
+        "</td><td>" + esc(describeNode(byId.get(e.to))) + "</td></tr>").join("")
+    : "<tr><td colspan=\"3\" class=\"muted\">No triples match the current filters.</td></tr>";
+}
+
+function showEdgeTriple(e) {
+  const byId = new Map(current.nodes.map(n => [n.id, n]));
+  $("#detail").innerHTML = "<h2>Graph triple</h2><dl class=\"triple-detail\">" +
+    "<dt>Head</dt><dd>" + esc(describeNode(byId.get(e.from))) + "</dd>" +
+    "<dt>Relation</dt><dd><b>" + esc(e.label) + "</b></dd>" +
+    "<dt>Tail</dt><dd>" + esc(describeNode(byId.get(e.to))) + "</dd></dl>";
 }
 
 function applyFilters() {
@@ -76,6 +105,7 @@ function applyFilters() {
     hidden: n.type === "Claim" ? !!claimHidden(n.id)
           : n.type === "Evidence" ? (!ev || !!claimHidden(n.id.replace("EV_","")))
           : n.type === "Uncertainty" ? !on.has(n.data.level) : false})));
+  renderTriples(current, hide);
 }
 document.querySelector("#filters").addEventListener("change", applyFilters);
 

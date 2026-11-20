@@ -11,7 +11,7 @@
 <body>
 <header class="top">
   <h1>E-C PlasticKG</h1>
-  <p>Search a topic to build its evidence-backed claim graph from the abstracts.</p>
+  <p>Search a topic to build its evidence-backed claim graph and inspect its relations as triples.</p>
   <form id="searchForm" role="search">
     <input id="q" type="search" placeholder="Try Pyrolysis, PET or Microplastics" autocomplete="off" aria-label="Research keyword">
     <button type="submit">Build graph</button>
@@ -30,6 +30,19 @@
       <label><input type="checkbox" id="showEv" checked> Evidence</label>
     </div>
     <div id="graph" role="img" aria-label="Knowledge graph"></div>
+    <section class="triples-panel" aria-labelledby="triples-title">
+      <div class="triples-heading">
+        <h2 id="triples-title">Graph triples</h2>
+        <span id="tripleCount" class="muted" aria-live="polite"></span>
+      </div>
+      <p class="muted triples-note">Each edge is shown as (subject/head, predicate/relation, object/tail). Claim nodes hold full sentences; Entity nodes are canonical terms.</p>
+      <div class="triples-scroll">
+        <table id="triples">
+          <thead><tr><th>Subject / head</th><th>Predicate / relation</th><th>Object / tail</th></tr></thead>
+          <tbody><tr><td colspan="3" class="muted">Build a graph to see its triples.</td></tr></tbody>
+        </table>
+      </div>
+    </section>
     <ul class="legend" id="legend"></ul>
   </section>
   <aside id="detail" class="detail">
