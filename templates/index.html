@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>E-C PlasticKG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="top">
+  <h1>E-C PlasticKG</h1>
+  <p>Search a topic to build its evidence-backed claim graph from the abstracts.</p>
+  <form id="searchForm" role="search">
+    <input id="q" type="search" placeholder="Try Pyrolysis, PET or Microplastics" autocomplete="off" aria-label="Research keyword">
+    <button type="submit">Build graph</button>
+  </form>
+  <div id="chips" class="chips"></div>
+</header>
+
+<main>
+  <section class="canvas-wrap">
+    <div id="summary" class="summary" aria-live="polite">No graph yet. Pick a keyword above.</div>
+    <div class="filters" id="filters" hidden>
+      <span>Show uncertainty:</span>
+      <label><input type="checkbox" data-u="U1" checked> U1</label>
+      <label><input type="checkbox" data-u="U2" checked> U2</label>
+      <label><input type="checkbox" data-u="U3" checked> U3</label>
+      <label><input type="checkbox" id="showEv" checked> Evidence</label>
+    </div>
+    <div id="graph" role="img" aria-label="Knowledge graph"></div>
+    <ul class="legend" id="legend"></ul>
+  </section>
+  <aside id="detail" class="detail">
+    <h2>Details</h2>
+    <p class="muted">Select a node or edge to see its scope, evidence passage and uncertainty.</p>
+  </aside>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.9/standalone/umd/vis-network.min.js"></script>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

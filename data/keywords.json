@@ -1,0 +1,30 @@
+{
+  "Material-based": {
+    "PET": ["pet", "polyethylene terephthalate", "pet film", "pet bottles"],
+    "HDPE": ["hdpe", "high-density polyethylene"],
+    "LDPE": ["ldpe", "low-density polyethylene"],
+    "Polypropylene (PP)": ["polypropylene", "pp"],
+    "PVC": ["pvc", "polyvinyl chloride"],
+    "Polystyrene": ["polystyrene"],
+    "Microplastics": ["microplastics", "microplastic"],
+    "Nanoplastics": ["nanoplastics", "nanoplastic"]
+  },
+  "Process-based": {
+    "Pyrolysis": ["pyrolysis", "pyrolytic", "thermal cracking"],
+    "Chemical Recycling": ["chemical recycling", "glycolysis", "feedstock recycling"],
+    "Mechanical Recycling": ["mechanical recycling", "reprocessing"],
+    "Biodegradation": ["biodegradation", "biodegrade", "enzymatic degradation", "petase"],
+    "Photodegradation": ["photodegradation", "uv irradiation", "photo-oxidation"],
+    "Depolymerization": ["depolymerization", "depolymerisation", "glycolysis"],
+    "Gasification": ["gasification", "syngas"],
+    "Catalysed Cracking": ["catalysed cracking", "catalyzed cracking", "catalytic cracking", "catalytic pyrolysis"]
+  },
+  "Research-based": {
+    "Plastic Waste Management": ["plastic waste management", "waste management", "landfilling"],
+    "Waste-to-Energy": ["waste-to-energy", "energy recovery", "calorific value"],
+    "Recycling Efficiency": ["recycling efficiency", "material recovery"],
+    "Environmental Impact": ["environmental impact", "greenhouse gas", "emissions", "toxicity"],
+    "Circular Economy": ["circular economy"],
+    "Sustainable Recycling": ["sustainable recycling", "recycling pathways"]
+  }
+}
