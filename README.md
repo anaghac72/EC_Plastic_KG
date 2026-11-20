@@ -1,4 +1,4 @@
-# E-C PlasticKG
+# EC_Plastic_KG
 
 Dynamic, keyword-driven, evidence-centric and scope-aware Knowledge Graph generation for
 plastic waste management research abstracts.
